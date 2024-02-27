@@ -1,0 +1,50 @@
+cstorage_low:
+  variable: Cumulative CCS
+  unit: Mt CO2
+  description: Cumulative amount of geologically stored carbon with "low" risk
+  categorize:
+    name: Carbon Storage
+    label: Low Risk
+    color: xkcd:green
+  criteria:
+    upper_bound: 800000
+    year: 2100
+    region: World
+cstorage_mid:
+  variable: Cumulative CCS
+  unit: Mt CO2
+  description: Cumulative amount of geologically stored carbon with "medium" risk
+  categorize:
+    name: Carbon Storage
+    label: Medium Risk
+    color: xkcd:baby blue
+  criteria:
+    upper_bound: 1000000
+    lower_bound: 800000
+    year: 2100
+    region: World
+cstorage_high:
+  variable: Cumulative CCS
+  unit: Mt CO2
+  description: Cumulative amount of geologically stored carbon with "high" risk
+  categorize:
+    name: Carbon Storage
+    label: High Risk
+    color: xkcd:goldenrod
+  criteria:
+    upper_bound: 1500000
+    lower_bound: 1000000
+    year: 2100
+    region: World
+cstorage_max:
+  variable: Cumulative CCS
+  unit: Mt CO2
+  description: Cumulative amount of geologically stored carbon with "maximum" risk
+  categorize:
+    name: Carbon Storage
+    label: Maximum Risk
+    color: xkcd:crimson
+  criteria:
+    lower_bound: 1500000
+    year: 2100
+    region: World

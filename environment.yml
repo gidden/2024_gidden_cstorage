@@ -1,0 +1,16 @@
+name: analysis
+channels:
+  - default
+  - conda-forge
+dependencies:
+- python=3.10
+- pip
+- ipywidgets
+- nb_black
+- matplotlib
+- tqdm
+- pandas
+- pip:
+  - pyam-iamc
+  - black
+  
