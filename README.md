@@ -9,16 +9,17 @@ jupyter notebooks with the
 [jupytext](https://jupytext.readthedocs.io/en/latest/paired-notebooks.html)
 tool, e.g.,
 
-.. code-block:: bash
-
-    jupytext --sync notebook.py # generates a notebook.ipynb file
+```bash
+    $ jupytext --sync notebook.py # generates a notebook.ipynb file
+```
 
 If you make a material change to `notebook.ipynb`, you can resync it manually if
 needed with
 
-.. code-block:: bash
 
-    jupytext --sync notebook.ipynb # updates the notebook.py file
+```bash
+    $ jupytext --sync notebook.ipynb # updates the notebook.py file
+```
 
 # Assessment
 
@@ -27,10 +28,10 @@ The `assessment` folder holds all workflow code as Jupyter notebooks. To fully
    order has meaning as follows:
    1. `100` series notebooks read data from original data sources,
       process it, and place it in the `data/derived` folder
-   2. `200` series notebooks generate tables, SI figures, and fact bases for
-      statements made in the paper 
-   3. `300` series notebooks use processed data to perform analysis and create
+   2. `200` series notebooks use processed data to perform analysis and create
       figure-ready datasets together with figures
+   3. `300` series notebooks generate tables, SI figures, and fact bases for
+      statements made in the paper 
 
 ## Data
 
