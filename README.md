@@ -1,30 +1,59 @@
 # Overview
 
-This is an analysis repository. It has the following structure:
+This is the analysis repository for Gidden et al. (2024).
 
-1. The `assessment` folder holds all workflow code as Jupyter notebooks. To
-   fully replicate this workflow, they should be run in numerical order. The
-   numerical order has meaning as follows:
-   1. `100` series notebooks read data from original IAM database sources,
-      process it, and place it in the `processed_data` folder
-   2. `200` series notebooks read data from non-IAM sources, process it, and
-      place it in the `processed_data` folder
-   3. `300` series notebooks use processed data to perform analysis and create
+# Notebooks
+
+All notebooks here are in the form of python files, which can be synced as
+jupyter notebooks with the
+[jupytext](https://jupytext.readthedocs.io/en/latest/paired-notebooks.html)
+tool, e.g.,
+
+```bash
+    $ jupytext --sync notebook.py # generates a notebook.ipynb file
+```
+
+If you make a material change to `notebook.ipynb`, you can resync it manually if
+needed with
+
+
+```bash
+    $ jupytext --sync notebook.ipynb # updates the notebook.py file
+```
+
+# Assessment
+
+The `assessment` folder holds all workflow code as Jupyter notebooks. To fully
+   replicate this workflow, they should be run in numerical order. The numerical
+   order has meaning as follows:
+   1. `100` series notebooks read data from original data sources,
+      process it, and place it in the `data/derived` folder
+   2. `200` series notebooks use processed data to perform analysis and create
       figure-ready datasets together with figures
-2. The `scripts` folder holds additional processing code which is not
-   meaningfully relevant to understand the analysis
-3. The `definitions` folder holds files used to define thresholds or other
-   quantities used in the analysis
+   3. `300` series notebooks generate tables, SI figures, and fact bases for
+      statements made in the paper 
 
-## Environment File
+## Data
 
-This repo requires an environment file to be created with the name `.env`
-sitting in the root directory (see `.env.sample`). It requires the following
-paths to be defined: 
-- `AR6_RAW`: path to the v1.1 R5 + World ALL_CLIMATE AR6 data
-- `AR6_META`: path to the v1.1 AR6 meta data
+Raw data needed to reproduce this analysis needs to be placed in `2024_gidden_cstorage/data/raw` includes:
 
-# Thank yous
+1. AR6 Scenario Data
+    - `AR6_Scenarios_Database_World_v1.1.csv`
+    - `AR6_Scenarios_Database_R5_regions_v1.1.csv`
+    - `AR6_Scenarios_Database_R10_regions_v1.1.csv`
+    - `AR6_Scenarios_Database_metadata_indicators_v1.1.xlsx`
 
-This analysis repo is based on a setup piloted by @gaurav-ganti - thank you
-Gaurav!
+Data in `2024_gidden_cstorage/data/packaged` comes directly with this repository
+and is subject to its license. Any further use of this data must be credited
+back to the citation below.
+
+Data in `2024_gidden_cstorage/data/derived` are generated from `100`-series
+notebooks in this repository.
+
+# Citation
+
+Please cite as:
+
+```
+Gidden et al. A precautionary planetary boundary for geologic carbon storage. *Journal* (2024) 
+```
