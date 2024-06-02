@@ -32,25 +32,7 @@ packaged_path = Path('../data/packaged')
 figure_path = Path('../figures')
 
 # %%
-ldf = (
-    pd.read_csv(data_path / '101_Analysis_dataset_global.csv')
-    .set_index('index')
-    ['World']
-)
-
-ldata = {
-    'Main': {'World': {'Total': ldf.loc['Pot_Final'], 'Onshore': ldf.loc['Pot_ON_Final'], 'Offshore': ldf.loc['Pot_OFF_Final']}},
-    'Oil and Gas': {'World': {'Total': 540}}
-    }
-all_limits = pd.DataFrame(ldata).T.rename_axis(index='Coverage', columns='Region').stack().apply(pd.Series)
-
-hue_label = 'Threshold'
-limits = pd.DataFrame([
-    {hue_label: 'high', 'value':  all_limits.loc[ismatch(Coverage='Main', Region='World'), 'Total'][0], 'note': 'Global Preventative Limit',},
-    {hue_label: 'med', 'value':  all_limits.loc[ismatch(Coverage='Main', Region='World'), 'Onshore'][0], 'note': 'Global Onshore Limit',},
-    {hue_label: 'low', 'value':  all_limits.loc[ismatch(Coverage='Oil and Gas', Region='World'), 'Total'][0], 'note': 'Global Limit with\nCurrent O&G Infrastructure',},
-]).set_index(hue_label)
-limits
+limits = pd.read_csv(data_path / '101_global_limits.csv', index_col=0)
 
 # %%
 levels = ['Model', 'Scenario', 'Region', 'Variable', 'Unit']
