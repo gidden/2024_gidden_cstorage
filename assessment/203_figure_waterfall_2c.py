@@ -27,7 +27,7 @@ data_path = Path('../data/packaged')
 figure_path = Path('../figures')
 
 # %%
-df = pd.read_excel(data_path / 'table_fig2b.xlsx', sheet_name='table_fig2b')
+df = pd.read_excel(data_path / 'Sensitivity_table_20240602.xlsx', sheet_name='data')
 df
 
 # %%

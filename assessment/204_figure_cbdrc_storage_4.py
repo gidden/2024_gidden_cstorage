@@ -28,7 +28,13 @@ raw_path = Path('../data/raw')
 figure_path = Path('../figures')
 
 # %%
-Data=pd.read_csv(data_path / 'responsibility_capacity_storage.csv')
+Data = pd.read_csv(data_path / 'responsibility_capacity_storage.csv')
+Data.head()
+
+# %%
+
+# %%
+Data=pd.read_csv(data_path / 'Analysis_dataset_20240602.csv')
 Mapi=pd.read_csv(data_path / "R5_ISO_MAP.csv")
 OP=pd.merge(Data,Mapi,left_on="ISO", right_on="iso3c",how="outer")
 
