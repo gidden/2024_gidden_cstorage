@@ -1,6 +1,7 @@
 # ---
 # jupyter:
 #   jupytext:
+#     formats: ipynb,py:percent
 #     text_representation:
 #       extension: .py
 #       format_name: percent
@@ -34,7 +35,7 @@ def cols_to_dict(df, col1, col2):
     df = df.set_index(col1)
     return {key: df[col2][key].to_list() for key in keys}
 
-mdf = pd.read_csv(data_path / 'iso3c_region_mapping_20240319_highlighted.csv')
+mdf = pd.read_csv(data_path / 'iso3c_region_mapping_20240319.csv')
 r5_mapping = cols_to_dict(mdf.dropna(subset='r5_iamc'), 'r5_iamc', 'iso3c')
 r10_mapping = cols_to_dict(mdf.dropna(subset='r10_iamc'), 'r10_iamc', 'iso3c')
 w_mapping = {'World': mdf.iso3c.unique()}
@@ -43,10 +44,11 @@ mdf.head()
 
 # %%
 df = (
-    pd.read_csv(data_path / 'Analysis_dataset.csv', index_col='ISO')
+    pd.read_csv(data_path / 'Analysis_dataset_20240602.csv', index_col='ISO')
     .assign(
         Pot_Baseline=lambda _df: _df['Pot_OFF_Baseline'] + _df['Pot_ON_Baseline'],
         Pot_Final=lambda _df: _df['Pot_OFF_Final'] + _df['Pot_ON_Final'],
+        Pot_OG=lambda _df: _df['Pot_OFF_OG'] + _df['Pot_ON_OG'],
     )
     .drop(['Absolute_Loss', 'Percentage_Loss'], axis=1)
 )
@@ -78,6 +80,9 @@ globaldf = df.sum().reset_index(name='World')
 globaldf.to_csv(write_path / '101_Analysis_dataset_global.csv', index=False)
 
 # %%
+globaldf
+
+# %%
 ldf = (
     pd.read_csv(write_path / '101_Analysis_dataset_global.csv')
     .set_index('index')
@@ -86,7 +91,7 @@ ldf = (
 
 ldata = {
     'Main': {'World': {'Total': ldf.loc['Pot_Final'], 'Onshore': ldf.loc['Pot_ON_Final'], 'Offshore': ldf.loc['Pot_OFF_Final']}},
-    'Oil and Gas': {'World': {'Total': 540}} # TODO we need to get this from the actual data
+    'Oil and Gas': {'World': {'Total': ldf.loc['Pot_OG'], 'Onshore': ldf.loc['Pot_ON_OG'], 'Offshore': ldf.loc['Pot_OFF_OG']}},
     }
 all_limits = pd.DataFrame(ldata).T.rename_axis(index='Coverage', columns='Region').stack().apply(pd.Series)
 
