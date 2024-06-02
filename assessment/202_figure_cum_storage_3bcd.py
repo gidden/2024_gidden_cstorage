@@ -25,40 +25,19 @@ from pathlib import Path
 from pandas_indexing import ismatch
 
 # %%
-data_path = Path('../processed_data/')
-ar6_path = Path('../raw_data/')
+data_path = Path('../data/derived')
+raw_path = Path('../data/raw')
+figure_path = Path('../figures')
 
 # %%
-cdf = pd.read_csv(data_path / '../processed_data/102_ccs_data_r5_r10.csv', index_col=list(range(5))).rename(columns={'2100': 'End of Century'})
-zdf = pd.read_csv(data_path / '102_netzero_ccs_data_r5_r10.csv', index_col=list(range(5))).rename(columns={'-2': 'Net Zero GHGs', '-1': 'Net Zero CO2'})
-mdf = pd.read_excel(ar6_path / 'AR6_Scenarios_Database_metadata_indicators_v1.1.xlsx', sheet_name='meta', index_col=list(range(2)))
-
-# %%
-# read using Sid's data
-# limits = pd.read_csv(data_path / '101_D2_compiled_r5_r10.csv', index_col=0)
-
-
-ldata = {
-    'Main': {'World': {'Total': 1595, 'Onshore': 1121, 'Offshore': 474}},
-    'Oil and Gas': {'World': {'Total': 903}}
-    }
-all_limits = pd.DataFrame(ldata).T.rename_axis(index='Coverage', columns='Region').stack().apply(pd.Series)
-
-hue_label = 'Threshold'
-limits = pd.DataFrame([
-    {hue_label: 'high', 'value':  all_limits.loc[ismatch(Coverage='Main', Region='World'), 'Total'][0], 'note': 'Global Preventative Limit',},
-    {hue_label: 'med', 'value':  all_limits.loc[ismatch(Coverage='Main', Region='World'), 'Onshore'][0], 'note': 'Global Onshore Limit',},
-    {hue_label: 'low', 'value':  all_limits.loc[ismatch(Coverage='Oil and Gas', Region='World'), 'Total'][0], 'note': 'Global Limit with Current Facilities',},
-]).set_index(hue_label)
-
-# %%
-all_limits
-
-# %%
+limits = pd.read_csv(data_path / '101_global_limits.csv', index_col=0)
+hue_label = limits.index.name
 limits
 
 # %%
-limits.loc['high', 'value']
+cdf = pd.read_csv(data_path / '102_ccs_data_r5_r10.csv', index_col=list(range(5))).rename(columns={'2100': 'End of Century'})
+zdf = pd.read_csv(data_path / '102_netzero_ccs_data_r5_r10.csv', index_col=list(range(5))).rename(columns={'-2': 'Net Zero GHGs', '-1': 'Net Zero CO2'})
+mdf = pd.read_excel(raw_path / 'AR6_Scenarios_Database_metadata_indicators_v1.1.xlsx', sheet_name='meta', index_col=list(range(2)))
 
 # %% [markdown]
 # # Global Exceedance
@@ -71,8 +50,6 @@ data = (
     .dropna(subset='Category')
 )
 data.head()
-
-# %%
 
 # %%
 cat_label = 'Category_label'
@@ -145,17 +122,14 @@ ax.set_ylabel('Cumulative Stored CO2 (Mt)')
 ax.set_xlabel('')
 #plt.xticks(rotation=90)
 
-fig.savefig('./figure_3b.pdf', bbox_inches='tight', dpi=1e3)
-fig.savefig('./figure_3b.png', bbox_inches='tight', dpi=1e3)
+fig.savefig(figure_path / 'figure_3b.pdf', bbox_inches='tight', dpi=1e3)
+fig.savefig(figure_path / 'figure_3b.png', bbox_inches='tight', dpi=1e3)
+
 
 # %% [markdown]
 # # Years of storage at net-zero levels
 #
 # We look at the difference between cumulative CO2 stored at net-zero compared to the boundary, and then divide by the rate at net-zero.
-
-# %%
-limits
-
 
 # %%
 def calc_time_to_limit(value, note):
@@ -199,8 +173,8 @@ sns.boxplot(
         ).set(ylabel='')
 
 
-fig.savefig('./figure_3c.pdf', bbox_inches='tight', dpi=1e3)
-fig.savefig('./figure_3c.png', bbox_inches='tight', dpi=1e3)
+fig.savefig(figure_path / 'figure_3c.pdf', bbox_inches='tight', dpi=1e3)
+fig.savefig(figure_path / 'figure_3c.png', bbox_inches='tight', dpi=1e3)
 
 # %% [markdown]
 # # Years until boundary is reached
@@ -262,200 +236,5 @@ sns.boxplot(
         ).set(ylabel='')
 
 
-fig.savefig('./figure_3d.pdf', bbox_inches='tight', dpi=1e3)
-fig.savefig('./figure_3d.png', bbox_inches='tight', dpi=1e3)
-
-# %% [markdown]
-# # Regional Exceedance
-#
-# **TODO** Move this to its own notebook
-
-# %%
-regions = limits.pix.unique('Region')[limits.pix.unique('Region').str.startswith('R5')]
-
-for region in regions:
-    sns.set_style("whitegrid")
-    fig, ax = plt.subplots(figsize=(10, 15))
-
-    sns.violinplot(
-            data=mdata.loc[ismatch(Region=region, Variable='Cumulative Carbon Sequestration|CCS')].reset_index(drop=True),
-            y='value',
-            hue='variable',
-            x='Category',
-            order=cats,
-            inner='quart',
-            split=True,
-            cut=0,
-            ax=ax,
-            )
-
-    limit = limits.loc[region, 'Net total storage'] * 1e3
-    ax.set_title(region)
-    ax.axhspan(limit, ax.get_ylim()[1], color='red', alpha=0.25, zorder=0)
-
-# %%
-
-# %%
-limits
-
-# %%
-
-# %%
-limits
-
-# %%
-tdata = (
-    time_to_limit.to_frame(name='Years to Exceed at Net-zero CO2 Levels')
-    .join(mdf, on=['Model', 'Scenario'])
-    .replace(to_replace={'Category': ['failed-vetting', 'no-climate-assessment']}, value=np.nan)
-    .dropna(subset='Category')
-)
-tdata.head()
-
-# %%
-
-# %%
-
-# %%
-# TODO: ???? compare with other plot; answer - different limit applied
-
-sns.set_style("whitegrid")
-fig, ax = plt.subplots(figsize=(15, 5))
-
-sns.boxplot(
-        data=tdata.reset_index(drop=True),
-        x='Years to Exceed at Net-zero CO2 Levels',
-        y='Category',
-        order=cats,
-#        inner='quart',
-#        split=True,
-#        cut=0,
-        ax=ax,
-        color='slategrey'
-        )
-
-ax.set_xlim(0, 400)
-
-fig.savefig('./figure_3c.pdf', bbox_inches='tight', dpi=1e3)
-fig.savefig('./figure_3c.png', bbox_inches='tight', dpi=1e3)
-
-# %%
-
-# %%
-# TODO: ???? compare with other plot; answer - different limit applied
-
-sns.set_style("whitegrid")
-fig, ax = plt.subplots(figsize=(15, 5))
-
-sns.boxplot(
-        data=tdata.reset_index(drop=True),
-        x='Years to Exceed at Net-zero CO2 Levels',
-        y='Category',
-        order=cats,
-#        inner='quart',
-#        split=True,
-#        cut=0,
-        ax=ax,
-        color='slategrey'
-        )
-
-ax.set_xlim(0, 400)
-
-fig.savefig('./figure_3c.pdf', bbox_inches='tight', dpi=1e3)
-fig.savefig('./figure_3c.png', bbox_inches='tight', dpi=1e3)
-
-# %% [markdown]
-# # Years until boundary is reached
-
-# %%
-ydf = cdf.loc[ismatch(Variable='Cumulative Carbon Sequestration|CCS', Region='World')].rename(columns={'End of Century': '2100'})
-ydf.columns = ydf.columns.astype(int)
-ydf[list(range(2101, 2301))] = np.nan
-extrap_ydf = ydf.interpolate(method="slinear", fill_value="extrapolate", limit_direction="both", axis=1)
-extrap_ydf.head()
-
-# %%
-limit = limits.loc['World', 'Net total storage'] * 1e3
-year_exceedance = (extrap_ydf > limit).idxmax(axis=1)
-year_exceedance[year_exceedance == 1990] = np.nan
-year_exceedance.head()
-
-
-# %%
-ydata = (
-    year_exceedance.to_frame(name='Exceedance Year')
-    .join(mdf, on=['Model', 'Scenario'])
-    .replace(to_replace={'Category': ['failed-vetting', 'no-climate-assessment']}, value=np.nan)
-    .dropna(subset='Category')
-)
-ydata.head()
-
-# %%
-# TODO: add fraction of scenarios in category in this dataset
-
-sns.set_style("whitegrid")
-fig, ax = plt.subplots(figsize=(15, 5))
-
-sns.violinplot(
-        data=ydata.reset_index(drop=True),
-        x='Exceedance Year',
-        y='Category',
-        order=cats,
-        inner='quart',
-        split=True,
-        cut=0,
-        ax=ax,
-        color='slategrey'
-        )
-
-fig.savefig('./figure_3d_violin.pdf', bbox_inches='tight', dpi=1e3)
-
-# %%
-# TODO: ???? compare with other plot
-
-sns.set_style("whitegrid")
-fig, ax = plt.subplots(figsize=(15, 5))
-
-sns.boxplot(
-        data=ydata.reset_index(drop=True),
-        x='Exceedance Year',
-        y='Category',
-        order=cats,
-#        inner='quart',
-#        split=True,
-#        cut=0,
-        ax=ax,
-        color='slategrey'
-        )
-
-
-fig.savefig('./figure_3d.pdf', bbox_inches='tight', dpi=1e3)
-fig.savefig('./figure_3d.png', bbox_inches='tight', dpi=1e3)
-
-# %% [markdown]
-# # Regional Exceedance
-
-# %%
-regions = limits.pix.unique('Region')[limits.pix.unique('Region').str.startswith('R5')]
-
-for region in regions:
-    sns.set_style("whitegrid")
-    fig, ax = plt.subplots(figsize=(10, 15))
-
-    sns.violinplot(
-            data=mdata.loc[ismatch(Region=region, Variable='Cumulative Carbon Sequestration|CCS')].reset_index(drop=True),
-            y='value',
-            hue='variable',
-            x='Category',
-            order=cats,
-            inner='quart',
-            split=True,
-            cut=0,
-            ax=ax,
-            )
-
-    limit = limits.loc[region, 'Net total storage'] * 1e3
-    ax.set_title(region)
-    ax.axhspan(limit, ax.get_ylim()[1], color='red', alpha=0.25, zorder=0)
-
-# %%
+fig.savefig(figure_path / 'figure_3d.pdf', bbox_inches='tight', dpi=1e3)
+fig.savefig(figure_path / 'figure_3d.png', bbox_inches='tight', dpi=1e3)
