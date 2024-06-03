@@ -21,93 +21,137 @@ from pathlib import Path
 
 import plotnine as p9
 
+from pandas_indexing import ismatch
+
 
 # %%
 data_path = Path('../data/packaged')
 raw_path = Path('../data/raw')
 figure_path = Path('../figures')
 
-# %%
-Data = pd.read_csv(data_path / 'responsibility_capacity_storage.csv')
-Data.head()
+# %% [markdown]
+# # Storage
 
 # %%
+df = pd.read_csv(data_path / 'Analysis_dataset_20240602.csv')
+mdf = pd.read_csv(data_path / "iso3c_region_mapping_20240602.csv")
+sdf = pd.merge(df, mdf[['iso3c', 'r5_iamc']], left_on='ISO', right_on='iso3c', how='left').drop('ISO', axis=1).dropna(subset='iso3c').set_index('iso3c')
+sdf['Pot_Final'] = sdf['Pot_OFF_Final'] + sdf['Pot_ON_Final']
+sdf.head()
+
+# %% [markdown]
+# # Emissions
 
 # %%
-Data=pd.read_csv(data_path / 'Analysis_dataset_20240602.csv')
-Mapi=pd.read_csv(data_path / "R5_ISO_MAP.csv")
-OP=pd.merge(Data,Mapi,left_on="ISO", right_on="iso3c",how="outer")
+# Country-level territorial CO2 in kt 
+tdf = pd.read_csv(raw_path / "Guetschow-et-al-2021-PRIMAP-hist_v2.3.1_20-Sep_2021.csv", index_col=list(range(6)))
+tdf = tdf.loc[ismatch(**{
+    'source': 'PRIMAP-hist_v2.3.1',
+    'scenario (PRIMAP-hist)': 'HISTTP', # including 3rd party reporting
+    'entity': 'CO2',
+    'category (IPCC2006_PRIMAP)': 'M.0.EL', # national total excl LULUCF
+})][pd.Series(range(1990, 2020), dtype=str)].cumsum(axis=1).pix.project('area (ISO3)').rename_axis(index='iso3c', columns='year')
+tdf.head()
 
 # %%
-Emm=pd.read_csv(raw_path / "Guetschow-et-al-2021-PRIMAP-hist_v2.3.1_20-Sep_2021.csv")
-Emm=Emm[(Emm["source"]=="PRIMAP-hist_v2.3.1")&
-        (Emm["scenario (PRIMAP-hist)"]=="HISTTP")&
-        (Emm["entity"]=="KYOTOGHG (AR4GWP100)")&
-        (Emm["entity"]=="KYOTOGHG (AR4GWP100)")]
-
-df=Emm.drop(['source', 'scenario (PRIMAP-hist)', 'entity', 'unit','category (IPCC2006_PRIMAP)'], axis=1)
-
-A2=df.groupby("area (ISO3)").sum()
-A2["Emission (billion tonne)"]=A2.sum(axis=1)
-A2=A2.reset_index()
-A2=A2[["area (ISO3)", "Emission (billion tonne)"]]
-
-
-GDP=pd.read_csv(raw_path / "API_NY.GDP.PCAP.PP.KD_DS2_en_csv_v2_45514.csv", skiprows=4)
-GDP=GDP[["Country Code","2019"]]
-GDP["GDP/capita 2019"]=GDP["2019"]/1000
-
-POP=pd.read_csv(raw_path / "API_SP.POP.TOTL_DS2_en_csv_v2_34.csv",skiprows=4)
-POP=POP[["Country Code","2019"]]
-POP["PPLN"]=POP["2019"]
-
-OPX=pd.merge(OP,GDP,left_on="ISO",right_on="Country Code",how="inner")
-OPX0=pd.merge(OPX,POP,left_on="ISO",right_on="Country Code",how="inner")
-OPX1=pd.merge(OPX0,A2,left_on="ISO",right_on="area (ISO3)",how="inner")
-
-
-OPX1["Percentage_Loss"]=(OPX1["Percentage_Loss"])*100
-OPX1["EMM/cap"]=OPX1["Emission (billion tonne)"]/OPX1["PPLN"]
-OPX1["L5"]=OPX1["Pot_OFF_Final"]+OPX1["Pot_ON_Final"]
-OPXN=OPX1[OPX1["L5"]>0.001]
-OPX2=OPXN.rename({'L5':'Net Storage Potential (GTCO2)',
-                  "GDP/capita 2019":"GDP|PPP 2017($)('000) per Capita in 2019 ", 
-                  "EMM/cap": "Cumulative emission (Gg CO2 eq) per Capita in 2019",
-                  "r5_iamc":"R5 regional Classification"}, axis=1)
-
-
-# %%
-c1 = OPX2['Cumulative emission (Gg CO2 eq) per Capita in 2019'] > 1.5
-c2 = OPX2['Cumulative emission (Gg CO2 eq) per Capita in 2019'] < 0.5
-c3 = OPX2["Net Storage Potential (GTCO2)"] > 25
-c4 = OPX2["Net Storage Potential (GTCO2)"] < .1
-other = OPX2['iso3c'].isin(['IND', 'CHN', 'SAU', 'IRN', 'KWT'])
-
-OPX2['keep_labels'] = OPX2.loc[((c1 | c2) & (c3 | c4)) | other, 'iso3c']
-
-gdp_var = "GDP per capita\n(1000$)"
-em_var = 'Cumulative Emissions in 2019 (Mt CO2 per capita)'
-stor_var = "Preventative Storage Potential (Gt CO2)"
-reg_var = 'IPCC Region'
-rename = {
-    "GDP|PPP 2017($)('000) per Capita in 2019 ": gdp_var,
-    'Cumulative emission (Gg CO2 eq) per Capita in 2019': em_var, 
-    "Net Storage Potential (GTCO2)": stor_var,
-    'R5 regional Classification': reg_var,
-}
-
-plot = (
-    p9.ggplot(OPX2.rename(columns=rename).dropna(subset=reg_var), p9.aes(em_var, stor_var, size=gdp_var))
-    + p9.geom_point(p9.aes(color=reg_var))
-    + p9.scale_y_log10() 
-    + p9.scale_x_log10()
-    + p9.theme(figure_size=(9, 6))
-    + p9.geom_vline(xintercept=1, alpha=0.75, linetype='dotted')  
-    + p9.geom_hline(yintercept=1, alpha=0.75, linetype='dotted')  
-    + p9.geom_label(p9.aes(label="keep_labels"), 
-                 size=8, alpha=0.5, 
-                 nudge_y=0.055, nudge_x=-0.055, 
-                 )
+# country-level carbon major CO2 in Mt
+cdf = (
+    pd.merge(
+        pd.read_csv(raw_path / "emissions_low_granularity.csv"),
+        pd.read_excel(data_path / "carbon_major_iso_mapping.xlsx"),
+        left_on='parent_entity',
+        right_on='name',
+    )
+    .groupby(['iso3c', 'year'])['total_emissions_MtCO2e']
+    .sum()
+    .unstack('year')
+    .fillna(method='ffill')
+    [range(1990, 2020)]
+    .multiply(1e3) # Mt to kt
+    .cumsum(axis=1)
 )
-plot.save(figure_path / 'figure_4.pdf', bbox_inches='tight', dpi=1000)
-plot
+cdf.head()
+
+# %%
+edf = pd.concat([
+    tdf.rename(columns={'2019': 'Territorial Emissions (1990-2019)'})['Territorial Emissions (1990-2019)'],
+    cdf.rename(columns={2019: 'Carbon Major Emissions (1990-2019)'})['Carbon Major Emissions (1990-2019)'],
+    ], axis=1)
+edf
+
+# %% [markdown]
+# # Socio Economics
+
+# %%
+gdppc = (
+    (pd.read_csv(raw_path / "API_NY.GDP.PCAP.PP.KD_DS2_en_csv_v2_45514.csv", skiprows=4, index_col=1)["2019"] / 1e3)
+    .to_frame()
+    .rename_axis(index='iso3c')
+    .rename(columns={'2019': '2019 GDP / capita'})
+)
+
+pop = (
+    (pd.read_csv(raw_path / "API_SP.POP.TOTL_DS2_en_csv_v2_34.csv", skiprows=4, index_col=1)["2019"])
+    .to_frame()
+    .rename_axis(index='iso3c')
+    .rename(columns={'2019': '2019 population'})
+)
+pop.head()
+
+# %% [markdown]
+# # Plots
+
+# %%
+pdata = pd.concat([edf, gdppc, pop, sdf[sdf['Pot_Final'] > 0.01]], axis=1).reset_index()
+
+tcol = 'Territorial CO2 Emissions (1990-2019) per capita'
+pdata[tcol] = pdata['Territorial Emissions (1990-2019)'] / pdata['2019 population']
+ccol = 'Carbon Major Emissions (1990-2019) per capita'
+pdata[ccol] = pdata['Carbon Major Emissions (1990-2019)'] / pdata['2019 population']
+
+pdata.head()
+
+
+# %%
+def plot(data, col):
+    c1 = data[col] > 1.5
+    c2 = data[col] < 0.5
+    c3 = data["Pot_Final"] > 25
+    c4 = data["Pot_Final"] < .1
+    other = data['iso3c'].isin(['IND', 'CHN', 'SAU', 'IRN', 'KWT'])
+
+    data['keep_labels'] = pdata.loc[((c1 | c2) & (c3 | c4)) | other, 'iso3c']
+
+    gdp_var = "GDP per capita\n(1000$)"
+    stor_var = "Preventative Storage Potential (Gt CO2)"
+    reg_var = 'IPCC Region'
+    rename = {
+        "2019 GDP / capita": gdp_var,
+        "Pot_Final": stor_var,
+        'r5_iamc': reg_var,
+    }
+
+    return (
+        p9.ggplot(data.rename(columns=rename).dropna(subset=[reg_var]), p9.aes(col, stor_var, size=gdp_var))
+        + p9.geom_point(p9.aes(color=reg_var))
+        + p9.scale_y_log10() 
+        + p9.scale_x_log10()
+        + p9.theme(figure_size=(9, 6))
+        + p9.geom_label(p9.aes(label="keep_labels"), 
+                    size=8, alpha=0.5, 
+                    nudge_y=0.055, nudge_x=-0.055, 
+                    )
+        + p9.geom_vline(xintercept=7e-2, alpha=0.75, linetype='dotted')  
+        + p9.geom_hline(yintercept=1, alpha=0.75, linetype='dotted') 
+    )
+
+
+# %%
+p = plot(pdata, tcol)
+p.save(figure_path / 'figure_4a.pdf', bbox_inches='tight', dpi=1000)
+p
+
+# %%
+p = plot(pdata, ccol)
+p.save(figure_path / 'figure_4b.pdf', bbox_inches='tight', dpi=1000)
+p
