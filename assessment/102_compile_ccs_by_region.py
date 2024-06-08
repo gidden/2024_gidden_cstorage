@@ -22,6 +22,8 @@ import matplotlib.pyplot as plt
 import pandas_indexing
 import pyam
 
+from pathlib import Path
+
 
 # %%
 def read_vars(fname, vars=[]):
@@ -31,10 +33,15 @@ def read_vars(fname, vars=[]):
 
 
 # %%
+data_path = Path('../data/packaged')
+write_path = Path('../data/derived')
+raw_path = Path('../data/raw')
+
+# %%
 fnames = [
-    '../raw_data/AR6_Scenarios_Database_World_v1.1.csv',
-    '../raw_data/AR6_Scenarios_Database_R5_regions_v1.1.csv',
-    '../raw_data/AR6_Scenarios_Database_R10_regions_v1.1.csv',
+    raw_path / 'AR6_Scenarios_Database_World_v1.1.csv',
+    raw_path / 'AR6_Scenarios_Database_R5_regions_v1.1.csv',
+    raw_path / 'AR6_Scenarios_Database_R10_regions_v1.1.csv',
     ]
 
 data = [read_vars(fname, vars=['Carbon Sequestration|CCS', 'Carbon Sequestration|CCS|Fossil']) for fname in fnames]
@@ -101,11 +108,11 @@ cdf = pyam.concat([
 
 # %%
 data = pyam.concat([df, cdf])
-data.to_csv('../processed_data/102_ccs_data_r5_r10.csv')
+data.to_csv(write_path / '102_ccs_data_r5_r10.csv')
 
 
 # %%
-data.load_meta('../raw_data/AR6_Scenarios_Database_metadata_indicators_v1.1.xlsx')
+data.load_meta(raw_path / 'AR6_Scenarios_Database_metadata_indicators_v1.1.xlsx')
 
 
 # %%
@@ -119,15 +126,15 @@ nz_co2 = data.timeseries().apply(value_at_net_zero, args=(nz,), axis=1).pix.assi
 nz = data.meta['Year of netzero GHG emissions (Harm-Infilled) Table SPM2']
 nz_ghg = data.timeseries().apply(value_at_net_zero, args=(nz,), axis=1).pix.assign(year=-2) # NB: net-zero ghg year is set to -2
 
-pyam.IamDataFrame(pd.concat([nz_co2, nz_ghg])).to_csv('../processed_data/102_netzero_ccs_data_r5_r10.csv')
+pyam.IamDataFrame(pd.concat([nz_co2, nz_ghg])).to_csv(write_path / '102_netzero_ccs_data_r5_r10.csv')
 
 
 # %% [markdown]
 # ## Quick Check
 
 # %%
-data = pyam.IamDataFrame('../processed_data/102_netzero_ccs_data_r5_r10.csv')
-data.load_meta('../raw_data/AR6_Scenarios_Database_metadata_indicators_v1.1.xlsx')
+data = pyam.IamDataFrame(write_path / '102_netzero_ccs_data_r5_r10.csv')
+data.load_meta(raw_path / 'AR6_Scenarios_Database_metadata_indicators_v1.1.xlsx')
 
 ax = (
     data
