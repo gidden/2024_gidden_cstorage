@@ -35,7 +35,7 @@ def cols_to_dict(df, col1, col2):
     df = df.set_index(col1)
     return {key: df[col2][key].to_list() for key in keys}
 
-mdf = pd.read_csv(data_path / 'iso3c_region_mapping_20240319.csv')
+mdf = pd.read_csv(data_path / 'iso3c_region_mapping_20240602.csv')
 r5_mapping = cols_to_dict(mdf.dropna(subset='r5_iamc'), 'r5_iamc', 'iso3c')
 r10_mapping = cols_to_dict(mdf.dropna(subset='r10_iamc'), 'r10_iamc', 'iso3c')
 w_mapping = {'World': mdf.iso3c.unique()}
@@ -56,6 +56,8 @@ df.head()
 
 
 # %%
+
+# %%
 def aggregate(df, mapping):
     df = df.pix.aggregate(ISO=mapping, mode='return')
     df['Percentage lost (net vs gross)'] = 1 - df['Pot_Final'] / df['Pot_Baseline']
@@ -67,6 +69,17 @@ data = pd.concat([
     aggregate(df, w_mapping),
 ])
 
+data
+
+# %%
+# we have to replace non-oil and gas with world values which include antartica and non-EEZ areas
+wdf = pd.read_excel(data_path / 'Sensitivity_table_20240602.xlsx', sheet_name='data')
+wdf
+
+# %%
+data.loc['World', ['Pot_ON_Baseline',  'Pot_OFF_Baseline', 'Pot_Baseline']] = wdf.iloc[0][['Onshore', 'Offshore', 'Total']].values
+data.loc['World', ['Pot_ON_Final',  'Pot_OFF_Final', 'Pot_Final']] = wdf.iloc[-1][['Onshore', 'Offshore', 'Total']].values
+data.loc['World', 'Percentage lost (net vs gross)'] = 1 - data.loc['World', 'Pot_Final'] / data.loc['World', 'Pot_Baseline']
 data
 
 # %%
