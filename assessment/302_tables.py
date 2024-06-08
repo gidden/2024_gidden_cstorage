@@ -66,9 +66,9 @@ data.head()
 # %%
 
 names = {
-    'Baseline': 'Technical',
-    'OG': 'Oil & Gas',
-    'Final': 'Precautionary'
+    'Baseline': 'Technical Potential (Gt CO2)',
+    'OG': 'Potential in Basins with Oil & Gas Infrastructure (Gt CO2)',
+    'Final': 'Planetary Boundary Threshold (Gt CO2)'
 }
 
 table1 = []
@@ -82,3 +82,5 @@ table1.head()
 
 # %%
 table1.to_excel(write_path / '302_table1.xlsx', index=True)
+
+# %%
