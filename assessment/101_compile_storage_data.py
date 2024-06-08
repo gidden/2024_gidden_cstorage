@@ -80,6 +80,12 @@ wdf
 data.loc['World', ['Pot_ON_Baseline',  'Pot_OFF_Baseline', 'Pot_Baseline']] = wdf.iloc[0][['Onshore', 'Offshore', 'Total']].values
 data.loc['World', ['Pot_ON_Final',  'Pot_OFF_Final', 'Pot_Final']] = wdf.iloc[-1][['Onshore', 'Offshore', 'Total']].values
 data.loc['World', 'Percentage lost (net vs gross)'] = 1 - data.loc['World', 'Pot_Final'] / data.loc['World', 'Pot_Baseline']
+
+# at least one o&g basin doesn't count towards a country, so we replace with sums
+cols = ['Pot_OFF_OG', 'Pot_ON_OG', 'Pot_OG']
+data.loc['World', cols] = df[cols].sum()
+
+
 data
 
 # %%
@@ -89,18 +95,7 @@ data.to_csv(write_path / '101_Analysis_dataset_r5_r10.csv', index=True)
 # # Limits file used in subsequent analysis
 
 # %%
-globaldf = df.sum().reset_index(name='World')
-globaldf.to_csv(write_path / '101_Analysis_dataset_global.csv', index=False)
-
-# %%
-globaldf
-
-# %%
-ldf = (
-    pd.read_csv(write_path / '101_Analysis_dataset_global.csv')
-    .set_index('index')
-    ['World']
-)
+ldf = data.loc['World']
 
 ldata = {
     'Main': {'World': {'Total': ldf.loc['Pot_Final'], 'Onshore': ldf.loc['Pot_ON_Final'], 'Offshore': ldf.loc['Pot_OFF_Final']}},
@@ -118,3 +113,5 @@ limits
 
 # %%
 limits.to_csv(write_path / '101_global_limits.csv', index=True)
+
+# %%
