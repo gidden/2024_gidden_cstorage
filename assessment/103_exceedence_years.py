@@ -19,122 +19,84 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-import pandas_indexing
 import pyam
 
+from pathlib import Path
+from pandas_indexing import ismatch, isin
 
 # %%
-def read_vars(fname, vars=[]):
-    df = pd.read_csv(fname)
-    df = df[df.Variable.isin(vars)]
-    return df
-
+data_path = Path('../data/derived')
 
 # %%
-fnames = [
-    '../raw_data/AR6_Scenarios_Database_World_v1.1.csv',
-    '../raw_data/AR6_Scenarios_Database_R5_regions_v1.1.csv',
-    '../raw_data/AR6_Scenarios_Database_R10_regions_v1.1.csv',
-    ]
-
-data = [read_vars(fname, vars=['Carbon Sequestration|CCS', 'Carbon Sequestration|CCS|Fossil']) for fname in fnames]
+regions = ['R5ASIA', 'R5LAM', 'R5MAF', 'R5OECD90+EU', 'R5REF', 'World']
 
 # %%
-levels = ['Model', 'Scenario']
-gidx = data[0].set_index(levels).pix.unique(levels=levels)
-r5idx = data[1].set_index(levels).pix.unique(levels=levels)
-r10idx = data[2].set_index(levels).pix.unique(levels=levels)
+cdf = pd.read_csv(data_path / '102_ccs_data_r5_r10.csv', index_col=list(range(5)))
+zdf = pd.read_csv(data_path / '102_netzero_ccs_data_r5_r10.csv', index_col=list(range(5))).rename(columns={'-2': 'Net Zero GHGs', '-1': 'Net Zero CO2'})
+limits = pd.read_csv(data_path / '101_Analysis_dataset_r5_r10.csv').set_index('Region')
 
 # %%
-gidx.difference(r5idx).unique('Model')
+hue_label = 'Threshold'
 
-# %%
-check = data[0].copy()
-check['Has R5'] = True
-check.loc[check['Model'].isin(gidx.difference(r5idx).unique('Model')), 'Has R5'] = False
-sns.violinplot(data=check, y='Variable', x='2100', hue='Has R5', inner="point")
-check['Has R5'].value_counts()
-
-# %%
-r5idx.difference(r10idx).unique('Model')
-
-# %%
-check = data[1].copy().set_index(['Model', 'Scenario', 'Region', 'Variable', 'Unit']).pix.aggregate(Region={'World': data[1]['Region'].unique()}, mode='return').reset_index()
-check['Has R10'] = True
-check.loc[check['Model'].isin(r5idx.difference(r10idx).unique('Model')), 'Has R10'] = False
-sns.violinplot(data=check, y='Variable', x='2100', hue='Has R10', inner="point")
-check['Has R10'].value_counts()
-
-# %% [markdown]
-# # Now we interpolate, add cumulative variables, and set values at net-zero
-
-# %%
-df = pyam.IamDataFrame(pd.concat(data)).interpolate(range(2010, 2101))
-
-# %%
-df.filter(region='World', scenario='EMF33_Med2C_cost100').plot.line(color='variable')
-
-
-# %%
-def make_cumulative_df(df, vold, vnew, offset=False):
-    y1 = offset or 2010
-    y2 = 2100
-    data = df.filter(variable=vold).interpolate(range(y1, y2 + 1))
-    if offset:
-        data = data.offset(year=y1) # NB this fails if there is no value in the year
-    pddata = (
-        data
-        .filter(year=range(y1, y2 + 1))
-        .rename(variable={vold: vnew})
-        .timeseries()
+def make_limit(limits, region):
+    row = limits.loc[region]
+    return pd.DataFrame(
+        {
+            'value': row[['Pot_Final', 'Pot_ON_Final', 'Pot_OG']].values,
+            'note': ['Global Preventative Limit', 'Global Onshore Limit', 'Global Limit with\nCurrent O&G Infrastructure']
+        },
+        index=pd.Index(['high', 'med', 'low'], name=hue_label),
     )
-    ret = pyam.IamDataFrame(pddata.cumsum(axis=1))
-    ret.set_meta(data.meta)
-    return ret
+
+make_limit(limits, 'World')
 
 
 # %%
-cdf = pyam.concat([
-    make_cumulative_df(df, vold='Carbon Sequestration|CCS', vnew='Cumulative Carbon Sequestration|CCS'),
-    make_cumulative_df(df, vold='Carbon Sequestration|CCS|Fossil', vnew='Cumulative Carbon Sequestration|CCS|Fossil'),
-])
+# year that limit is reached after achieving net-zero CO2 emissions globally
+def calc_time_to_limit(value, note, df):
+    limit = value * 1e3
+    nz_value = df.loc[ismatch(Variable='Cumulative Carbon Sequestration|CCS'), 'Net Zero CO2'].reset_index(level=['Variable'], drop=True)
+    nz_rate= df.loc[ismatch(Variable='Carbon Sequestration|CCS'), 'Net Zero CO2'].reset_index(level=['Variable'], drop=True)
+    return ((limit - nz_value) / nz_rate).pix.assign(**{hue_label: note})
+
+nzdf = []
+for region in regions:
+    time_to_limit = pd.concat([calc_time_to_limit(row['value'], row['note'], zdf.loc[ismatch(Region=region)]) for i, row in make_limit(limits, region).iterrows()])
+    nzdf.append(time_to_limit.to_frame(name='Years to Exceed at Net-zero CO2 Levels'))
+nzdf = pd.concat(nzdf).reset_index(['Unit'], drop=True)
+
+nzdf
+
 
 # %%
-data = pyam.concat([df, cdf])
-data.to_csv('../processed_data/102_ccs_data_r5_r10.csv')
+# year of exceedence extrapolating 
+def calc_time_to_limit(value, note, df):
+    limit = value * 1e3
+    nz_value = df.loc[ismatch(Variable='Cumulative Carbon Sequestration|CCS'), 'Net Zero CO2'].reset_index(level=['Variable'], drop=True)
+    nz_rate= df.loc[ismatch(Variable='Carbon Sequestration|CCS'), 'Net Zero CO2'].reset_index(level=['Variable'], drop=True)
+    return ((limit - nz_value) / nz_rate).pix.assign(**{hue_label: note})
 
+def calc_year_exceedance(value, note, df):
+    limit = value * 1e3
+    ydf = df.loc[ismatch(Variable='Cumulative Carbon Sequestration|CCS')].copy() 
+    ydf.columns = ydf.columns.astype(int)
+    ydf[list(range(2101, 2301))] = np.nan
+    extrap_ydf = ydf.interpolate(method="slinear", fill_value="extrapolate", limit_direction="both", axis=1)
+    year_exceedance = (extrap_ydf > limit).idxmax(axis=1)
+    year_exceedance[year_exceedance == 1990] = np.nan
+    return year_exceedance.pix.assign(**{hue_label: note})
+
+
+exdf = []
+for region in regions:
+    year_exceedance = pd.concat([calc_year_exceedance(row['value'], row['note'], df=cdf.loc[ismatch(Region=region)]) for i, row in make_limit(limits, region).iterrows()])
+    exdf.append(year_exceedance.to_frame(name='Exceedance Year'))
+exdf = pd.concat(exdf).reset_index(['Variable', 'Unit'], drop=True)
+
+exdf
+    
 
 # %%
-data.load_meta('../raw_data/AR6_Scenarios_Database_metadata_indicators_v1.1.xlsx')
-
-
-# %%
-def value_at_net_zero(row, nz):
-    year = nz.loc[row.name[0], row.name[1]]
-    return row[year] if np.isfinite(year) else np.nan
-
-nz = data.meta['Year of netzero CO2 emissions (Harm-Infilled) Table SPM2']
-nz_co2 = data.timeseries().apply(value_at_net_zero, args=(nz,), axis=1).pix.assign(year=-1) # NB: net-zero co2 year is set to -1
-
-nz = data.meta['Year of netzero GHG emissions (Harm-Infilled) Table SPM2']
-nz_ghg = data.timeseries().apply(value_at_net_zero, args=(nz,), axis=1).pix.assign(year=-2) # NB: net-zero ghg year is set to -2
-
-pyam.IamDataFrame(pd.concat([nz_co2, nz_ghg])).to_csv('../processed_data/102_netzero_ccs_data_r5_r10.csv')
-
-
-# %% [markdown]
-# ## Quick Check
-
-# %%
-data = pyam.IamDataFrame('../processed_data/102_netzero_ccs_data_r5_r10.csv')
-data.load_meta('../raw_data/AR6_Scenarios_Database_metadata_indicators_v1.1.xlsx')
-
-ax = (
-    data
-    .filter(variable='Cumulative Carbon Sequestration|CCS', year=[-1, -2], region='World')
-    .filter(Category='C*')
-    .convert_unit('Mt CO2/yr', 'Gt CO2', factor=1e-3)
-    .plot.box(x="year", by="Category", legend=True)
-)
+nzdf.join(exdf).to_csv(data_path / '103_exceedence_years.csv', index=True)
 
 # %%
