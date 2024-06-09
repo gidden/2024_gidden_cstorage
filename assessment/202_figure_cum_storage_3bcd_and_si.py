@@ -99,7 +99,7 @@ data = (
 add_label_mapping(data, drop=True)
 
 cstor_data = data.melt(id_vars=['Category', cat_label], value_vars=['Net Zero CO2', 'End of Century'], ignore_index=False)
-cstor_data = cstor_data.where(mdata.Category.isin(label_mapping.keys()))
+cstor_data = cstor_data.where(cstor_data.Category.isin(label_mapping.keys()))
 cstor_data.head()
 
 

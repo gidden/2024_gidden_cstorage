@@ -94,7 +94,7 @@ for region in regions:
 exdf = pd.concat(exdf).reset_index(['Variable', 'Unit'], drop=True)
 
 exdf
-    
+
 
 # %%
 nzdf.join(exdf).to_csv(data_path / '103_exceedence_years.csv', index=True)

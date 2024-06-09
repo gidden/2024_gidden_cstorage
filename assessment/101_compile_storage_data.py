@@ -56,8 +56,6 @@ df.head()
 
 
 # %%
-
-# %%
 def aggregate(df, mapping):
     df = df.pix.aggregate(ISO=mapping, mode='return')
     df['Percentage lost (net vs gross)'] = 1 - df['Pot_Final'] / df['Pot_Baseline']
