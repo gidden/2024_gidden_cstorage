@@ -77,7 +77,7 @@ for oname, nname in names.items():
     _data = data[oldcols]
     _data.columns = pd.MultiIndex.from_tuples((nname, kind) for kind in ['Offshore', 'Onshore', 'Total'])
     table1.append(_data)
-table1 = pd.concat(table1, axis=1).round(1)
+table1 = pd.concat(table1, axis=1).round(1).sort_index(level='Country ISO Code')
 table1.head()
 
 # %%
