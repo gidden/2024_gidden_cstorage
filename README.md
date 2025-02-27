@@ -54,6 +54,8 @@ Data in `2024_gidden_cstorage/data/packaged` comes directly with this repository
 and is subject to its license. Any further use of this data must be credited
 back to the citation below.
 
+In addition to the data packaged here, the user needs to grab the SupplementalTables.xlsx from the paper directly.
+
 Data in `2024_gidden_cstorage/data/derived` are generated from `100`-series
 notebooks in this repository.
 
