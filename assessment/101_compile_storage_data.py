@@ -34,10 +34,11 @@ cols = ['ISO', 'NAME', 'Region', 'Pot_OFF_Baseline', 'Pot_ON_Baseline', 'Pot_Bas
 df.columns = cols
 df = df.drop([193, 194, 229]) # get rid of pre-calculated totals
 df.iloc[-1, 2] = 'World' # manually set world
-df = df.drop(['ISO', 'NAME'], axis=1).groupby('Region').sum()
 df
 
 # %%
+df.to_csv(write_path / '101_Analysis_dataset_iso.csv', index=True)
+df = df.drop(['ISO', 'NAME'], axis=1).groupby('Region').sum()
 df.to_csv(write_path / '101_Analysis_dataset_r5_r10.csv', index=True)
 
 # %% [markdown]

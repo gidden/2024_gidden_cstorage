@@ -8,11 +8,12 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.16.1
 #   kernelspec:
-#     display_name: ME_X86_P3.8
+#     display_name: iam
 #     language: python
 #     name: python3
 # ---
 
+# %%
 from pathlib import Path
 
 import numpy as np
@@ -25,6 +26,7 @@ from pandas_indexing import ismatch
 
 # %%
 data_path = Path("../data/packaged")
+extra_data_path = Path('../data/derived')
 raw_path = Path("../data/raw")
 figure_path = Path("../figures")
 
@@ -32,7 +34,7 @@ figure_path = Path("../figures")
 # # Storage
 
 # %%
-df = pd.read_csv(data_path / "Analysis_dataset_20240602.csv")
+df = pd.read_csv(extra_data_path / "101_Analysis_dataset_iso.csv")
 mdf = pd.read_csv(data_path / "iso3c_region_mapping_20240602.csv")
 sdf = (
     pd.merge(df, mdf[["iso3c", "r5_iamc"]], left_on="ISO", right_on="iso3c", how="left")
@@ -108,7 +110,7 @@ edf
 gdppc = (
     (
         pd.read_csv(
-            raw_path / "API_NY.GDP.PCAP.PP.KD_DS2_en_csv_v2_45514.csv",
+            raw_path / "API_NY.GDP.PCAP.PP.KD_DS2_en_csv_v2_4129.csv",
             skiprows=4,
             index_col=1,
         )["2019"]
@@ -122,7 +124,7 @@ gdppc = (
 pop = (
     (
         pd.read_csv(
-            raw_path / "API_SP.POP.TOTL_DS2_en_csv_v2_34.csv", skiprows=4, index_col=1
+            raw_path / "API_SP.POP.TOTL_DS2_en_csv_v2_76253.csv", skiprows=4, index_col=1
         )["2019"]
     )
     .to_frame()
@@ -194,3 +196,5 @@ p
 p = plot(pdata, ccol)
 p.save(figure_path / "figure_4b.pdf", bbox_inches="tight", dpi=1000)
 p
+
+# %%
