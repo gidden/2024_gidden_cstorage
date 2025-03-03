@@ -8,7 +8,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.16.1
 #   kernelspec:
-#     display_name: pyam
+#     display_name: iam
 #     language: python
 #     name: python3
 # ---
@@ -67,9 +67,14 @@ def plot(var, nz=2055, limits=None, cumulative=False, fname=None, title=None, fi
     return fig, ax
 
 
-plot(var='Emissions*', title='Global CO2 Emissions', figsize=(4, 3), legend=False, fname=figure_path / 'diagram_emissions.pdf')
-plot(var='Carbon Sequestration*', title='CO2 Injection Rates', figsize=(4, 3), legend=False, fname=figure_path / 'diagram_injection.pdf')
-fig, ax = plot(var='Cumulative Carbon Sequestration*', title='Cumulative CO2 Storage', figsize=(4, 3), legend=False, cumulative=True, limits=limits, fname=figure_path / 'diagram_storage.pdf')
+for ext in ['pdf', 'png']:
+    plot(var='Emissions*', title='Global CO2 Emissions', figsize=(4, 3), legend=False, fname=figure_path / f'diagram_emissions.{ext}')
+    plot(var='Carbon Sequestration*', title='CO2 Injection Rates', figsize=(4, 3), legend=False, fname=figure_path / f'diagram_injection.{ext}')
+    fig, ax = plot(var='Cumulative Carbon Sequestration*', title='Cumulative CO2 Storage', figsize=(4, 3), legend=False, cumulative=True, limits=limits, fname=figure_path / f'diagram_storage.{ext}')
+
 
 # %%
 fig, ax = plot(var='Cumulative Carbon Sequestration*', title='Cumulative CO2 Storage', cumulative=True, limits=limits, legend={'loc': 'outside right', 'fontsize': 20}, figsize=(20, 5), fname=figure_path / 'diagram_storage_legend.pdf')
+fig, ax = plot(var='Cumulative Carbon Sequestration*', title='Cumulative CO2 Storage', cumulative=True, limits=limits, legend={'loc': 'outside right', 'fontsize': 20}, figsize=(20, 5), fname=figure_path / 'diagram_storage_legend.png')
+
+# %%

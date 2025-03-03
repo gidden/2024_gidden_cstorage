@@ -8,7 +8,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.16.1
 #   kernelspec:
-#     display_name: pyam
+#     display_name: iam
 #     language: python
 #     name: python3
 # ---
@@ -43,7 +43,7 @@ def make_limit(limits, region):
     return pd.DataFrame(
         {
             'value': row[['Pot_Final', 'Pot_ON_Final', 'Pot_OG']].values,
-            'note': ['Global Preventative Limit', 'Global Onshore Limit', 'Global Limit with\nCurrent O&G Infrastructure']
+            'note': ['Prudent Limit\nOn and Offshore', 'Prudent Limit Onshore', 'Prudent Limit with\nCurrent O&G Infrastructure']
         },
         index=pd.Index(['high', 'med', 'low'], name=hue_label),
     )

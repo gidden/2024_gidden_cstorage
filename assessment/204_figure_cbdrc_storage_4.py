@@ -92,11 +92,11 @@ cdf.head()
 # %%
 edf = pd.concat(
     [
-        tdf.rename(columns={"2019": "Territorial Emissions (1990-2019)"})[
-            "Territorial Emissions (1990-2019)"
+        tdf.rename(columns={"2019": "Cumulative Territorial Emissions (1990-2019)"})[
+            "Cumulative Territorial Emissions (1990-2019)"
         ],
-        cdf.rename(columns={2019: "Carbon Major Emissions (1990-2019)"})[
-            "Carbon Major Emissions (1990-2019)"
+        cdf.rename(columns={2019: "Cumulative Carbon Major Emissions (1990-2019)"})[
+            "Cumulative Carbon Major Emissions (1990-2019)"
         ],
     ],
     axis=1,
@@ -139,10 +139,10 @@ pop.head()
 # %%
 pdata = pd.concat([edf, gdppc, pop, sdf[sdf["Pot_Final"] > 0.01]], axis=1).reset_index()
 
-tcol = "Territorial CO2 Emissions (1990-2019) per capita"
-pdata[tcol] = pdata["Territorial Emissions (1990-2019)"] / pdata["2019 population"]
-ccol = "Carbon Major Emissions (1990-2019) per capita"
-pdata[ccol] = pdata["Carbon Major Emissions (1990-2019)"] / pdata["2019 population"]
+tcol = "Cumulative Territorial CO2 Emissions (1990-2019) [kt per capita]"
+pdata[tcol] = pdata["Cumulative Territorial Emissions (1990-2019)"] / pdata["2019 population"]
+ccol = "Cumulative Carbon Major Emissions (1990-2019) [kt per capita]"
+pdata[ccol] = pdata["Cumulative Carbon Major Emissions (1990-2019)"] / pdata["2019 population"]
 
 pdata.head()
 
@@ -188,13 +188,23 @@ def plot(data, col):
 
 
 # %%
+tcol
+
+# %%
+pdata[pdata.iso3c == 'USA'][tcol]
+
+# %%
 p = plot(pdata, tcol)
 p.save(figure_path / "figure_4a.pdf", bbox_inches="tight", dpi=1000)
+p.save(figure_path / "figure_4a.png", bbox_inches="tight", dpi=1000)
+
 p
 
 # %%
 p = plot(pdata, ccol)
 p.save(figure_path / "figure_4b.pdf", bbox_inches="tight", dpi=1000)
+p.save(figure_path / "figure_4b.png", bbox_inches="tight", dpi=1000)
+
 p
 
 # %%
