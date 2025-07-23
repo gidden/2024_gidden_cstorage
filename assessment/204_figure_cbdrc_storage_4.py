@@ -6,9 +6,9 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.16.1
+#       jupytext_version: 1.17.2
 #   kernelspec:
-#     display_name: iam
+#     display_name: scen
 #     language: python
 #     name: python3
 # ---
@@ -110,7 +110,7 @@ edf
 gdppc = (
     (
         pd.read_csv(
-            raw_path / "API_NY.GDP.PCAP.PP.KD_DS2_en_csv_v2_4129.csv",
+            raw_path / "API_NY.GDP.PCAP.PP.KD_DS2_en_csv_v2_20423.csv",
             skiprows=4,
             index_col=1,
         )["2019"]
@@ -124,7 +124,7 @@ gdppc = (
 pop = (
     (
         pd.read_csv(
-            raw_path / "API_SP.POP.TOTL_DS2_en_csv_v2_76253.csv", skiprows=4, index_col=1
+            raw_path / "API_SP.POP.TOTL_DS2_en_csv_v2_38144.csv", skiprows=4, index_col=1
         )["2019"]
     )
     .to_frame()
