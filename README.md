@@ -1,6 +1,10 @@
 # Overview
 
-This is the analysis repository for Gidden et al. (2024).
+This is the analysis repository for Gidden et al. (2025). Please cite as:
+
+```
+Gidden et al. A prudent planetary limit for geologic carbon storage. Nature (2025) 
+```
 
 # Notebooks
 
@@ -42,13 +46,15 @@ Raw data needed to reproduce this analysis needs to be placed in `2024_gidden_cs
     - `AR6_Scenarios_Database_R5_regions_v1.1.csv`
     - `AR6_Scenarios_Database_R10_regions_v1.1.csv`
     - `AR6_Scenarios_Database_metadata_indicators_v1.1.xlsx`
-2. [PRIMAP Emissions Data](https://www.pik-potsdam.de/paris-reality-check/primap-hist/)
+2. [PRIMAP Emissions Data](https://zenodo.org/records/5494497)
     - `Guetschow-et-al-2021-PRIMAP-hist_v2.3.1_20-Sep_2021.csv`
 3. [Carbon Major Emission Data](https://carbonmajors.org/Downloads)
     - `emissions_low_granularity.csv`
 4. [World Bank Socioeconomic data](https://data.worldbank.org/indicator)
-    - `API_NY.GDP.PCAP.PP.KD_DS2_en_csv_v2_45514.csv`
-    - `API_SP.POP.TOTL_DS2_en_csv_v2_34.csv`
+    - GDP per capita, PPP (constant 2021 international $): `API_NY.GDP.PCAP.PP.KD_DS2_en_csv_v2_20423.csv`
+    - Population, total: `API_SP.POP.TOTL_DS2_en_csv_v2_38144.csv`
+5. [Gidden et al 2025 Supplementary data](https://zenodo.org/records/15657543)
+    - `gidden_et_al_2025_supplemental_data.xlsx`
 
 Data in `2024_gidden_cstorage/data/packaged` comes directly with this repository
 and is subject to its license. Any further use of this data must be credited
@@ -59,10 +65,3 @@ In addition to the data packaged here, the user needs to grab the SupplementalTa
 Data in `2024_gidden_cstorage/data/derived` are generated from `100`-series
 notebooks in this repository.
 
-# Citation
-
-Please cite as:
-
-```
-Gidden et al. A precautionary planetary boundary for geologic carbon storage. *Journal* (2024) 
-```
