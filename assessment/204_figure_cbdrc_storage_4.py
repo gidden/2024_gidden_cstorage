@@ -72,44 +72,6 @@ tdf = (
 tdf.head()
 
 # %%
-# I need to double check this mapping and process
-e = pd.read_csv(raw_path / "emissions_low_granularity.csv")
-c1 = pd.read_excel(data_path / "carbon_major_iso_mapping.xlsx", sheet_name='v1')
-c2 = pd.read_excel(data_path / "carbon_major_iso_mapping.xlsx", sheet_name='v2')
-
-# %%
-len(c1), len(c2)
-
-# %%
-pd.Index(c1.name).difference(pd.Index(c2.name))
-
-# %%
-
-c1.name.isin(['Adani Enterprises']).any()
-
-# %%
-merged = pd.merge(
-        pd.read_csv(raw_path / "emissions_low_granularity.csv"),
-        pd.read_excel(data_path / "carbon_major_iso_mapping.xlsx", sheet_name='v2'),
-        left_on="parent_entity",
-        right_on="name",
-        how='outer',
-    )
-
-non_mapped = pd.Series(merged[merged.iso3c.isna()].parent_entity.unique())
-if non_mapped.any():
-    raise ValueError(f"non-mapped companies: {non_mapped}")
-
-# %%
-merged.head()
-
-# %%
-pd.read_excel('./diff.xlsx', sheet_name='Sheet1').dropna().to_excel('companies.xlsx', index=False)
-
-# %%
-merged.head()
-
-# %%
 # country-level carbon major CO2 in Mt
 merged = pd.merge(
         pd.read_csv(raw_path / "emissions_low_granularity.csv"),
