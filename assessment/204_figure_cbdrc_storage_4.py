@@ -72,14 +72,58 @@ tdf = (
 tdf.head()
 
 # %%
-# country-level carbon major CO2 in Mt
-cdf = (
-    pd.merge(
+# I need to double check this mapping and process
+e = pd.read_csv(raw_path / "emissions_low_granularity.csv")
+c1 = pd.read_excel(data_path / "carbon_major_iso_mapping.xlsx", sheet_name='v1')
+c2 = pd.read_excel(data_path / "carbon_major_iso_mapping.xlsx", sheet_name='v2')
+
+# %%
+len(c1), len(c2)
+
+# %%
+pd.Index(c1.name).difference(pd.Index(c2.name))
+
+# %%
+
+c1.name.isin(['Adani Enterprises']).any()
+
+# %%
+merged = pd.merge(
         pd.read_csv(raw_path / "emissions_low_granularity.csv"),
-        pd.read_excel(data_path / "carbon_major_iso_mapping.xlsx"),
+        pd.read_excel(data_path / "carbon_major_iso_mapping.xlsx", sheet_name='v2'),
         left_on="parent_entity",
         right_on="name",
+        how='outer',
     )
+
+non_mapped = pd.Series(merged[merged.iso3c.isna()].parent_entity.unique())
+if non_mapped.any():
+    raise ValueError(f"non-mapped companies: {non_mapped}")
+
+# %%
+merged.head()
+
+# %%
+pd.read_excel('./diff.xlsx', sheet_name='Sheet1').dropna().to_excel('companies.xlsx', index=False)
+
+# %%
+merged.head()
+
+# %%
+# country-level carbon major CO2 in Mt
+merged = pd.merge(
+        pd.read_csv(raw_path / "emissions_low_granularity.csv"),
+        pd.read_excel(data_path / "carbon_major_iso_mapping.xlsx", sheet_name='v2'),
+        left_on="parent_entity",
+        right_on="name",
+        how='outer',
+    )
+non_mapped = pd.Series(merged[merged.iso3c.isna()].parent_entity.unique())
+if non_mapped.any():
+    raise ValueError(f"non-mapped companies: {non_mapped}")
+
+cdf = (
+    merged
     .groupby(["iso3c", "year"])["total_emissions_MtCO2e"]
     .sum()
     .unstack("year")
@@ -144,6 +188,9 @@ pdata[tcol] = pdata["Cumulative Territorial Emissions (1990-2019)"] / pdata["201
 ccol = "Cumulative Carbon Major Emissions (1990-2019) [kt per capita]"
 pdata[ccol] = pdata["Cumulative Carbon Major Emissions (1990-2019)"] / pdata["2019 population"]
 
+names = pd.read_excel(raw_path/ "gidden_et_al_2025_supplemental_data.xlsx", sheet_name="S7")
+pdata = pd.merge(pdata, names, left_on='r5_iamc', right_on='IPCC Macro Region', how='outer')
+
 pdata.head()
 
 
@@ -163,7 +210,7 @@ def plot(data, col):
     rename = {
         "2019 GDP / capita": gdp_var,
         "Pot_Final": stor_var,
-        "r5_iamc": reg_var,
+        "Short Name": reg_var,
     }
 
     return (
@@ -174,7 +221,7 @@ def plot(data, col):
         + p9.geom_point(p9.aes(color=reg_var))
         + p9.scale_y_log10()
         + p9.scale_x_log10()
-        + p9.theme(figure_size=(9, 6))
+        + p9.theme(figure_size=(11, 6))
         + p9.geom_label(
             p9.aes(label="keep_labels"),
             size=8,
