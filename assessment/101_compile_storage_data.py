@@ -6,9 +6,9 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.16.1
+#       jupytext_version: 1.17.2
 #   kernelspec:
-#     display_name: iam
+#     display_name: scen
 #     language: python
 #     name: python3
 # ---
@@ -25,11 +25,11 @@ from pandas_indexing import ismatch
 from pathlib import Path
 
 # %%
-data_path = Path('../data/packaged')
+data_path = Path('../data/raw')
 write_path = Path('../data/derived')
 
 # %%
-df = pd.read_excel(data_path / 'SupplementaryTables.xlsx', sheet_name='S5', skiprows=range(2))
+df = pd.read_excel(data_path / 'gidden_et_al_2025_supplemental_data.xlsx', sheet_name='S5', skiprows=range(2))
 cols = ['ISO', 'NAME', 'Region', 'Pot_OFF_Baseline', 'Pot_ON_Baseline', 'Pot_Baseline',	'Pot_OFF_Final', 'Pot_ON_Final', 'Pot_Final', 'Pot_OFF_OG', 'Pot_ON_OG', 'Pot_OG']
 df.columns = cols
 df = df.drop([193, 194, 229]) # get rid of pre-calculated totals

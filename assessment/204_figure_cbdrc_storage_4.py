@@ -6,9 +6,9 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.16.1
+#       jupytext_version: 1.17.2
 #   kernelspec:
-#     display_name: iam
+#     display_name: scen
 #     language: python
 #     name: python3
 # ---
@@ -73,13 +73,19 @@ tdf.head()
 
 # %%
 # country-level carbon major CO2 in Mt
-cdf = (
-    pd.merge(
+merged = pd.merge(
         pd.read_csv(raw_path / "emissions_low_granularity.csv"),
-        pd.read_excel(data_path / "carbon_major_iso_mapping.xlsx"),
+        pd.read_excel(data_path / "carbon_major_iso_mapping.xlsx", sheet_name='v2'),
         left_on="parent_entity",
         right_on="name",
+        how='outer',
     )
+non_mapped = pd.Series(merged[merged.iso3c.isna()].parent_entity.unique())
+if non_mapped.any():
+    raise ValueError(f"non-mapped companies: {non_mapped}")
+
+cdf = (
+    merged
     .groupby(["iso3c", "year"])["total_emissions_MtCO2e"]
     .sum()
     .unstack("year")
@@ -110,7 +116,7 @@ edf
 gdppc = (
     (
         pd.read_csv(
-            raw_path / "API_NY.GDP.PCAP.PP.KD_DS2_en_csv_v2_4129.csv",
+            raw_path / "API_NY.GDP.PCAP.PP.KD_DS2_en_csv_v2_20423.csv",
             skiprows=4,
             index_col=1,
         )["2019"]
@@ -124,7 +130,7 @@ gdppc = (
 pop = (
     (
         pd.read_csv(
-            raw_path / "API_SP.POP.TOTL_DS2_en_csv_v2_76253.csv", skiprows=4, index_col=1
+            raw_path / "API_SP.POP.TOTL_DS2_en_csv_v2_38144.csv", skiprows=4, index_col=1
         )["2019"]
     )
     .to_frame()
@@ -144,6 +150,9 @@ pdata[tcol] = pdata["Cumulative Territorial Emissions (1990-2019)"] / pdata["201
 ccol = "Cumulative Carbon Major Emissions (1990-2019) [kt per capita]"
 pdata[ccol] = pdata["Cumulative Carbon Major Emissions (1990-2019)"] / pdata["2019 population"]
 
+names = pd.read_excel(raw_path/ "gidden_et_al_2025_supplemental_data.xlsx", sheet_name="S7")
+pdata = pd.merge(pdata, names, left_on='r5_iamc', right_on='IPCC Macro Region', how='outer')
+
 pdata.head()
 
 
@@ -152,7 +161,7 @@ def plot(data, col):
     c1 = data[col] > 1.5
     c2 = data[col] < 0.5
     c3 = data["Pot_Final"] > 25
-    c4 = data["Pot_Final"] < 0.1
+    c4 = data["Pot_Final"] < 0.05
     other = data["iso3c"].isin(["IND", "CHN", "SAU", "IRN", "KWT"])
 
     data["keep_labels"] = pdata.loc[((c1 | c2) & (c3 | c4)) | other, "iso3c"]
@@ -163,23 +172,37 @@ def plot(data, col):
     rename = {
         "2019 GDP / capita": gdp_var,
         "Pot_Final": stor_var,
-        "r5_iamc": reg_var,
+        "Short Name": reg_var,
     }
+    constant_factor = 0.1
 
+    _data = data.rename(columns=rename).dropna(subset=[reg_var])
     return (
         p9.ggplot(
-            data.rename(columns=rename).dropna(subset=[reg_var]),
+            _data,
             p9.aes(col, stor_var, size=gdp_var),
         )
+    # option 1
         + p9.geom_point(p9.aes(color=reg_var))
+    # option 2
+    #    + p9.geom_point(p9.aes(fill=reg_var), stroke=0.5, color='black')
+    #    + p9.scale_size_continuous(range=(0, constant_factor * max(_data[gdp_var])))
         + p9.scale_y_log10()
         + p9.scale_x_log10()
-        + p9.theme(figure_size=(9, 6))
-        + p9.geom_label(
+        + p9.theme(figure_size=(11, 6))
+    #    + p9.geom_label(
+    #        p9.aes(label="keep_labels"),
+    #        size=9,
+    #        alpha=1.0,
+    #        fill='white',
+    #        nudge_y=0.055,
+    #        nudge_x=-0.055,
+    #        label_size=0,
+    #    )
+        + p9.geom_text(
             p9.aes(label="keep_labels"),
-            size=8,
-            alpha=0.5,
-            nudge_y=0.055,
+            size=9,
+            nudge_y=0.075,
             nudge_x=-0.055,
         )
         + p9.geom_vline(xintercept=7e-2, alpha=0.75, linetype="dotted")
@@ -187,22 +210,18 @@ def plot(data, col):
     )
 
 
-# %%
-tcol
 
 # %%
-pdata[pdata.iso3c == 'USA'][tcol]
-
-# %%
+print(tcol)
 p = plot(pdata, tcol)
-p.save(figure_path / "figure_4a.pdf", bbox_inches="tight", dpi=1000)
+p.save(figure_path / "figure_4a_option1.pdf", bbox_inches="tight", dpi=1000)
 p.save(figure_path / "figure_4a.png", bbox_inches="tight", dpi=1000)
 
 p
 
 # %%
 p = plot(pdata, ccol)
-p.save(figure_path / "figure_4b.pdf", bbox_inches="tight", dpi=1000)
+p.save(figure_path / "figure_4b_option1.pdf", bbox_inches="tight", dpi=1000)
 p.save(figure_path / "figure_4b.png", bbox_inches="tight", dpi=1000)
 
 p
