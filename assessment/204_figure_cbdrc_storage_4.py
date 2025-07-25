@@ -161,7 +161,7 @@ def plot(data, col):
     c1 = data[col] > 1.5
     c2 = data[col] < 0.5
     c3 = data["Pot_Final"] > 25
-    c4 = data["Pot_Final"] < 0.1
+    c4 = data["Pot_Final"] < 0.05
     other = data["iso3c"].isin(["IND", "CHN", "SAU", "IRN", "KWT"])
 
     data["keep_labels"] = pdata.loc[((c1 | c2) & (c3 | c4)) | other, "iso3c"]
@@ -174,21 +174,35 @@ def plot(data, col):
         "Pot_Final": stor_var,
         "Short Name": reg_var,
     }
+    constant_factor = 0.1
 
+    _data = data.rename(columns=rename).dropna(subset=[reg_var])
     return (
         p9.ggplot(
-            data.rename(columns=rename).dropna(subset=[reg_var]),
+            _data,
             p9.aes(col, stor_var, size=gdp_var),
         )
+    # option 1
         + p9.geom_point(p9.aes(color=reg_var))
+    # option 2
+    #    + p9.geom_point(p9.aes(fill=reg_var), stroke=0.5, color='black')
+    #    + p9.scale_size_continuous(range=(0, constant_factor * max(_data[gdp_var])))
         + p9.scale_y_log10()
         + p9.scale_x_log10()
         + p9.theme(figure_size=(11, 6))
-        + p9.geom_label(
+    #    + p9.geom_label(
+    #        p9.aes(label="keep_labels"),
+    #        size=9,
+    #        alpha=1.0,
+    #        fill='white',
+    #        nudge_y=0.055,
+    #        nudge_x=-0.055,
+    #        label_size=0,
+    #    )
+        + p9.geom_text(
             p9.aes(label="keep_labels"),
-            size=8,
-            alpha=0.5,
-            nudge_y=0.055,
+            size=9,
+            nudge_y=0.075,
             nudge_x=-0.055,
         )
         + p9.geom_vline(xintercept=7e-2, alpha=0.75, linetype="dotted")
@@ -196,22 +210,18 @@ def plot(data, col):
     )
 
 
-# %%
-tcol
 
 # %%
-pdata[pdata.iso3c == 'USA'][tcol]
-
-# %%
+print(tcol)
 p = plot(pdata, tcol)
-p.save(figure_path / "figure_4a.pdf", bbox_inches="tight", dpi=1000)
+p.save(figure_path / "figure_4a_option1.pdf", bbox_inches="tight", dpi=1000)
 p.save(figure_path / "figure_4a.png", bbox_inches="tight", dpi=1000)
 
 p
 
 # %%
 p = plot(pdata, ccol)
-p.save(figure_path / "figure_4b.pdf", bbox_inches="tight", dpi=1000)
+p.save(figure_path / "figure_4b_option1.pdf", bbox_inches="tight", dpi=1000)
 p.save(figure_path / "figure_4b.png", bbox_inches="tight", dpi=1000)
 
 p
